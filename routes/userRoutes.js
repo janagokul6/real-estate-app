@@ -1,33 +1,39 @@
 import express from "express";
 import { registerUser, loginUser } from '../controller/userController.js';
 import User from "../model/userModel.js";
+import bcrypt from 'bcryptjs';
+
 
 const route= express.Router() ;
 
 
 route.post('/register', async (req, res) => {
-  const { password } = req.body;
-  const enteredPassword = password;
+  const { name, email, password } = req.body;
   try {
+    const existingData = await User.findOne({ email: email });
+    if (existingData) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+
     const salt = await bcrypt.genSalt(10);
-    const encryptedPassword = await bcrypt.hash(enteredPassword, salt);
-    const creatableData = { ...req.body, password: encryptedPassword };
-  
-      const existingData = await User.findOne({ email: req.body.email });
-      if (existingData) {
-        return res.status(409).json({ message: "user already exists" });
-      }
-   
-    const newData = new User(creatableData);
-    const savedData = await newData.save();
-   
-    return res.status(201).json({ message: "user created successfully",user:savedData});
+    const encryptedPassword = await bcrypt.hash(password, salt);
+
+    const newUser = new User({
+      name,
+      email,
+      password: encryptedPassword,
+      // isRegistered: true,
+      registrationDate: new Date()
+    });
+
+    const savedUser = await newUser.save();
+
+    return res.status(201).json({ message: "User created successfully", user: savedUser });
   } catch (error) {
-    
-      return res.status(500).json({ message: "Internal Server Error" });
-    
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-  });
+});
   route.post('/login', async (req, res) => {
     const { email, password } = req.body;
   const newPassword = password;
