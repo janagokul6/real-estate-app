@@ -1,14 +1,36 @@
 import express from "express";
-import { registerUser, loginUser } from '../controller/userController.js';
+import { registerUser, loginUser } from "../controller/userController.js";
 import User from "../model/userModel.js";
-import bcrypt from 'bcryptjs';
-import jwt from "jsonwebtoken"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
+import cloudinary from "cloudinary";
+import multer from "multer";
 
-const route= express.Router() ;
+const route = express.Router();
 
+// Configure Cloudinary
+cloudinary.v2.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-route.post('/register', async (req, res) => {
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "./uploads");
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+});
+
+const uploadedFile = multer({ storage: storage });
+
+route.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
@@ -25,33 +47,35 @@ route.post('/register', async (req, res) => {
       email,
       password: encryptedPassword,
       // isRegistered: true,
-      registrationDate: new Date()
+      registrationDate: new Date(),
     });
 
     const savedUser = await newUser.save();
 
-    return res.status(201).json({ message: "User created successfully", user: savedUser });
+    return res
+      .status(201)
+      .json({ message: "User created successfully", user: savedUser });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 });
-  route.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+route.post("/login", async (req, res) => {
+  const { email, password } = req.body;
   const newPassword = password;
   try {
     const AdminData = await User.findOne({ email: email });
     if (!AdminData) return res.status(403).send({ message: "No admin exist" });
     const comparePassword = await bcrypt.compare(
-        newPassword,
-        AdminData.password
+      newPassword,
+      AdminData.password
     );
     if (!comparePassword)
       return res.status(401).send({ message: "invalid credentials" });
     const token = jwt.sign(
-        { email: AdminData.email, id: AdminData.id },
-        process.env.JWT_SECRET,
-        { expiresIn: "30d" }
+      { email: AdminData.email, id: AdminData.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "30d" }
     );
     const { password, ...adminDetails } = AdminData._doc;
     return res.status(200).json({ admin: adminDetails, token: token });
@@ -59,27 +83,56 @@ route.post('/register', async (req, res) => {
     console.log(error);
     return res.status(509).send({ message: "something went wrong" });
   }
-  });
+});
 
-  route.patch('/update/:id', async (req, res) => {
-    const { id } = req.params;
-    const updatableData = { ...req.body };
-    
+route.patch("/update/:id", async (req, res) => {
+  const { id } = req.params;
+  const updatableData = { ...req.body };
+
   try {
-    const AdminData = await User.findOne({_id:id});
+    const AdminData = await User.findOne({ _id: id });
     if (!AdminData) return res.status(403).send({ message: "No admin exist" });
-  const updatedData = await User.findOneAndUpdate(
-    {_id:id},
-    { $set: updatableData },
-    { new: true }
-  );
+    const updatedData = await User.findOneAndUpdate(
+      { _id: id },
+      { $set: updatableData },
+      { new: true }
+    );
     const { password, ...adminDetails } = updatedData._doc;
     return res.status(200).json({ admin: adminDetails });
   } catch (error) {
     console.log(error);
     return res.status(509).send({ message: "something went wrong" });
   }
-  });
+});
 
 
-export default route
+
+
+// Define the upload route
+router.post("/uploadImage", uploadedFile.single("uploadedfile"), async (req, res) => {
+  try {
+    console.log(req.body);
+    if (!req.file) {
+      res.send("Please upload your image first");
+    } else {
+      const savedFile = await cloudinary.v2.uploader.upload(req.file.path, { public_id: "testing" });
+      
+      console.log(savedFile);
+      console.log(savedFile.secure_url);
+
+      // Generate Cloudinary URL
+      const url = cloudinary.v2.url("testing", {
+        width: 100,
+        height: 150,
+        crop: 'fill'
+      });
+
+      console.log(url);
+      res.send("Image uploaded successfully");
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("An error occurred while uploading the image");
+  }
+});
+export default route;
