@@ -61,5 +61,24 @@ route.post('/register', async (req, res) => {
   }
   });
 
+  route.patch('/update', async (req, res) => {
+    const { id } = req.params;
+    const updatableData = { ...req.body };
+  try {
+    const AdminData = await Model.findOne({_id:id});
+    if (!AdminData) return res.status(403).send({ message: "No admin exist" });
+  const updatedData = await User.findOneAndUpdate(
+    {_id:id},
+    { $set: updatableData },
+    { new: true }
+  );
+    const { password, ...adminDetails } = updatedData._doc;
+    return res.status(200).json({ admin: adminDetails, token: token });
+  } catch (error) {
+    console.log(error);
+    return res.status(509).send({ message: "something went wrong" });
+  }
+  });
+
 
 export default route
