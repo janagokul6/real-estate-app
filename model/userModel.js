@@ -6,12 +6,12 @@ const userSchema = new Schema({
 
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  phone: { type: String, required: true },
-  role: { type: String, enum: ['buyer', 'seller', 'agent', 'admin'], default: 'buyer' },
+  phone: { type: String,  },
+  role: { type: String,  },
   isRegistered: { type: Boolean, default: false },
   registrationDate: { type: Date },
   lastLoginDate: { type: Date },
 },{timestamp:true});
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model('RealEstateUser', userSchema);
 export default User
