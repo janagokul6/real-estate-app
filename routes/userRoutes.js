@@ -2,6 +2,7 @@ import express from "express";
 import { registerUser, loginUser } from '../controller/userController.js';
 import User from "../model/userModel.js";
 import bcrypt from 'bcryptjs';
+import jwt from "jsonwebtoken"
 
 
 const route= express.Router() ;
@@ -9,6 +10,7 @@ const route= express.Router() ;
 
 route.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
+
   try {
     const existingData = await User.findOne({ email: email });
     if (existingData) {
@@ -54,6 +56,7 @@ route.post('/register', async (req, res) => {
     const { password, ...adminDetails } = AdminData._doc;
     return res.status(200).json({ admin: adminDetails, token: token });
   } catch (error) {
+    console.log(error);
     return res.status(509).send({ message: "something went wrong" });
   }
   });
