@@ -167,7 +167,7 @@ route.put("/reset-password/:id", async (req, res) => {
     }
     const updatableData = { password: encryptedPassword };
     const storedUser = await  User.findOneAndUpdate(
-      { _id: id }
+      { _id: id },
       { $set: updatableData },
       { new: true }
     );
@@ -185,7 +185,7 @@ route.put("/reset-password/:id", async (req, res) => {
 });
 
 // Define the upload route
-router.post(
+route.post(
   "/uploadImage",
   uploadedFile.single("uploadedfile"),
   async (req, res) => {
