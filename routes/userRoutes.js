@@ -3,6 +3,7 @@ import { registerUser, loginUser } from "../controller/userController.js";
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -10,6 +11,22 @@ import cloudinary from "cloudinary";
 import multer from "multer";
 
 const route = express.Router();
+
+export const transporter = nodemailer.createTransport({
+  service: "gmail",
+  port: 465,
+  secure: true,
+  // logger: true,
+  debug: true,
+  secureConnection: false,
+  auth: {
+    user: process.env.NODEMAILER_EMAIL,
+    pass: process.env.NODEMAILER_PASS
+  },
+  tls: {
+    rejectUnauthorized: true,
+  },
+});
 
 // Configure Cloudinary
 cloudinary.v2.config({
@@ -104,35 +121,100 @@ route.patch("/update/:id", async (req, res) => {
     return res.status(509).send({ message: "something went wrong" });
   }
 });
-
-
-
-
-// Define the upload route
-router.post("/uploadImage", uploadedFile.single("uploadedfile"), async (req, res) => {
+route.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
   try {
-    console.log(req.body);
-    if (!req.file) {
-      res.send("Please upload your image first");
+    const storedUser = await User.findOne({ email: email });
+    if (!storedUser) return res.status(403).send({ message: "No admin exist" });
+    const OTP = Math.floor(108309 + Math.random() * 900000);
+    const mailOptions = {
+      from: "janasomnath173@gmail.com",
+      to: email,
+      subject: "One-Time Password (OTP) for Verification",
+      text: `Your OTP is: ${OTP}`,
+    };
+    const result = await transporter.sendMail(mailOptions);
+    return res.status(200).json({
+      otp: OTP,
+      message: "Email Sent Successfully!",
+      id: storedUser._id,
+    });
+  } catch (error) {
+    if (error.message === "Not Found") {
+      return res.status(409).json({ message: "user does not exists" });
     } else {
-      const savedFile = await cloudinary.v2.uploader.upload(req.file.path, { public_id: "testing" });
-      
-      console.log(savedFile);
-      console.log(savedFile.secure_url);
-
-      // Generate Cloudinary URL
-      const url = cloudinary.v2.url("testing", {
-        width: 100,
-        height: 150,
-        crop: 'fill'
-      });
-
-      console.log(url);
-      res.send("Image uploaded successfully");
+      return res.status(501).json({ message: "something went wrong" });
     }
-  } catch (err) {
-    console.log(err);
-    res.status(500).send("An error occurred while uploading the image");
   }
 });
+route.put("/reset-password/:id", async (req, res) => {
+  const { id } = req.params;
+  const { currentPassword, password } = req.body;
+  const newPassword = password;
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const encryptedPassword = await bcrypt.hash(newPassword, salt);
+    if (currentPassword) {
+      const UserData = await User.findOne({ _id: id });
+      if (!UserData) return res.status(403).send({ message: "No user exist" });
+
+      const comparePassword = await bcrypt.compare(
+        newPassword,
+        UserData.password
+      );
+      if (!comparePassword)
+        return res.status(401).send({ message: "invalid credentials" });
+    }
+    const updatableData = { password: encryptedPassword };
+    const storedUser = await  User.findOneAndUpdate(
+      { _id: id }
+      { $set: updatableData },
+      { new: true }
+    );
+    const { password, ...userDetails } = storedUser._doc;
+    return res
+      .status(200)
+      .json({ user: userDetails, message: "password updated successfully" });
+  } catch (error) {
+    if (error.message === "Not Found") {
+      return res.status(409).json({ message: "user does not exists" });
+    } else {
+      return res.status(501).json({ message: "something went wrong" });
+    }
+  }
+});
+
+// Define the upload route
+router.post(
+  "/uploadImage",
+  uploadedFile.single("uploadedfile"),
+  async (req, res) => {
+    try {
+      console.log(req.body);
+      if (!req.file) {
+        res.send("Please upload your image first");
+      } else {
+        const savedFile = await cloudinary.v2.uploader.upload(req.file.path, {
+          public_id: "testing",
+        });
+
+        console.log(savedFile);
+        console.log(savedFile.secure_url);
+
+        // Generate Cloudinary URL
+        const url = cloudinary.v2.url("testing", {
+          width: 100,
+          height: 150,
+          crop: "fill",
+        });
+
+        console.log(url);
+        res.send("Image uploaded successfully");
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("An error occurred while uploading the image");
+    }
+  }
+);
 export default route;
