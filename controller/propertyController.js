@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 
 const uploadDir = 'uploads/';
-const BASE_URL = 'http://localhost:5500/uploads/';
+const BASE_URL = 'http://95.216.209.46:5500/uploads/';
 
 // Ensure upload directory exists
 if (!fs.existsSync(uploadDir)) {
