@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProperty, getProperties, getPropertiesNear,updateProperty, deleteProperty  } from '../controller/propertyController.js';
+import { createProperty, getProperties, getPropertiesNear,updateProperty, deleteProperty ,getPropertiesByAgent } from '../controller/propertyController.js';
 
 const router = express.Router();
 
@@ -14,6 +14,7 @@ router.put('/properties/:id', updateProperty);
 
 // Route to get properties near a location
 router.get('/properties/near', getPropertiesNear);
+router.get('/properties/:agentId', getPropertiesByAgent );
 
 
 // Route to delete a property by ID

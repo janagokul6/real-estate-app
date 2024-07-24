@@ -208,6 +208,25 @@ route.put("/reset-password/:id", async (req, res) => {
     }
   }
 });
+route.get("/user/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch a single user by ID
+    const user = await User.findById(id);
+    
+    // Check if the user exists
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Return the user data
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+});
 
 // Define the upload route
 // route.post(

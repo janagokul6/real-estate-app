@@ -266,3 +266,29 @@ export const deleteProperty = async (req, res) => {
   }
 };
 
+// ------------------------------------------------->>>>>>>>>>>>
+export const getPropertiesByAgent = async (req, res) => {
+  const { agentId } = req.params; // Extract agentId from request parameters
+
+  try {
+    // Find properties by agentId
+    const properties = await Property.find({ agentId });
+
+    // Map through properties to include full image paths
+    const propertiesWithFullImagePaths = properties.map(property => ({
+      ...property.toObject(),
+      images: property.images.map(image => `${BASE_URL}${path.basename(image)}`),
+      mainImage: property.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
+    }));
+
+    if (propertiesWithFullImagePaths.length === 0) {
+      return res.status(404).json({ message: 'No properties found for this agent' });
+    }
+
+    res.status(200).json(propertiesWithFullImagePaths);
+  } catch (error) {
+    console.error('Error in getPropertiesByAgent:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
