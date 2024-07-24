@@ -1,6 +1,7 @@
 
 import User from "../model/userModel.js"
 
+
 // Register a new user
 export const registerUser = async (userData) => {
   try {

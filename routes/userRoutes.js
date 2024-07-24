@@ -3,8 +3,11 @@ import { registerUser, loginUser } from "../controller/userController.js";
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import nodemailer from "nodemailer"
 import dotenv from "dotenv";
+
+import path from 'path';
+import fs from 'fs';
 dotenv.config();
 
 import cloudinary from "cloudinary";
@@ -12,20 +15,20 @@ import multer from "multer";
 
 const route = express.Router();
 
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  port: 465,
-  secure: true,
-  // logger: true,
-  debug: true,
-  secureConnection: false,
+export  const transporter = nodemailer.createTransport({
+  host: 'smtp.ethereal.email',
+  port: 587,
   auth: {
-    user: process.env.NODEMAILER_EMAIL,
-    pass: process.env.NODEMAILER_PASS
-  },
-  tls: {
-    rejectUnauthorized: true,
-  },
+      user: 'chanel.nolan41@ethereal.email',
+      pass: '6crGVE8GS5ycV8jqNE'
+  }
+});
+transporter.verify(function(error, success) {
+  if (error) {
+    console.log(error);
+  } else {
+    console.log("Server is ready to take our messages");
+  }
 });
 
 // Configure Cloudinary
@@ -35,17 +38,25 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const uploadDir = 'uploads/profiles';
+const BASE_URL = 'http://localhost:5500/uploads/profiles';
 // Configure multer storage
+
+// Ensure upload directory exists
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./uploads");
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, file.originalname);
+    cb(null, `profiles_${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`);
   },
 });
 
-const uploadedFile = multer({ storage: storage });
+const upload = multer({ storage });
 
 route.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
@@ -82,7 +93,7 @@ route.post("/login", async (req, res) => {
   const newPassword = password;
   try {
     const AdminData = await User.findOne({ email: email });
-    if (!AdminData) return res.status(403).send({ message: "No admin exist" });
+    if (!AdminData) return res.status(403).send({ message: "No user exist" });
     const comparePassword = await bcrypt.compare(
       newPassword,
       AdminData.password
@@ -102,23 +113,37 @@ route.post("/login", async (req, res) => {
   }
 });
 
-route.patch("/update/:id", async (req, res) => {
+route.patch("/update/:id", upload.single('image'), async (req, res) => {
   const { id } = req.params;
   const updatableData = { ...req.body };
 
   try {
-    const AdminData = await User.findOne({ _id: id });
-    if (!AdminData) return res.status(403).send({ message: "No admin exist" });
+    const userData = await User.findOne({ _id: id });
+    if (!userData) return res.status(403).send({ message: "No user exists" });
+
+    // Handle image upload
+    if (req.file) {
+      const imageFileName = `profiles_${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+      const imagePath = path.join(uploadDir, imageFileName);
+
+      // Move the file to the upload directory
+      fs.renameSync(req.file.path, imagePath);
+
+      // Update the image URL in the user data
+      updatableData.imageurl = `${BASE_URL}${imageFileName}`;
+    }
+
     const updatedData = await User.findOneAndUpdate(
       { _id: id },
       { $set: updatableData },
       { new: true }
     );
-    const { password, ...adminDetails } = updatedData._doc;
-    return res.status(200).json({ admin: adminDetails });
+
+    const { password, ...userDetails } = updatedData._doc;
+    return res.status(200).json({ message: "User updated successfully", user: userDetails });
   } catch (error) {
     console.log(error);
-    return res.status(509).send({ message: "something went wrong" });
+    return res.status(500).send({ message: "Something went wrong" });
   }
 });
 route.post("/forgot-password", async (req, res) => {
@@ -128,7 +153,7 @@ route.post("/forgot-password", async (req, res) => {
     if (!storedUser) return res.status(403).send({ message: "No admin exist" });
     const OTP = Math.floor(108309 + Math.random() * 900000);
     const mailOptions = {
-      from: "janasomnath173@gmail.com",
+      from: "thakuraksingh1@gmail.com",
       to: email,
       subject: "One-Time Password (OTP) for Verification",
       text: `Your OTP is: ${OTP}`,
@@ -185,36 +210,36 @@ route.put("/reset-password/:id", async (req, res) => {
 });
 
 // Define the upload route
-route.post(
-  "/uploadImage",
-  uploadedFile.single("uploadedfile"),
-  async (req, res) => {
-    try {
-      console.log(req.body);
-      if (!req.file) {
-        res.send("Please upload your image first");
-      } else {
-        const savedFile = await cloudinary.v2.uploader.upload(req.file.path, {
-          public_id: "testing",
-        });
+// route.post(
+//   "/uploadImage",
+//   uploadedFile.single("uploadedfile"),
+//   async (req, res) => {
+//     try {
+//       console.log(req.body);
+//       if (!req.file) {
+//         res.send("Please upload your image first");
+//       } else {
+//         const savedFile = await cloudinary.v2.uploader.upload(req.file.path, {
+//           public_id: "testing",
+//         });
 
-        console.log(savedFile);
-        console.log(savedFile.secure_url);
+//         console.log(savedFile);
+//         console.log(savedFile.secure_url);
 
-        // Generate Cloudinary URL
-        const url = cloudinary.v2.url("testing", {
-          width: 100,
-          height: 150,
-          crop: "fill",
-        });
+//         // Generate Cloudinary URL
+//         const url = cloudinary.v2.url("testing", {
+//           width: 100,
+//           height: 150,
+//           crop: "fill",
+//         });
 
-        console.log(url);
-        res.send("Image uploaded successfully");
-      }
-    } catch (err) {
-      console.log(err);
-      res.status(500).send("An error occurred while uploading the image");
-    }
-  }
-);
+//         console.log(url);
+//         res.send("Image uploaded successfully");
+//       }
+//     } catch (err) {
+//       console.log(err);
+//       res.status(500).send("An error occurred while uploading the image");
+//     }
+//   }
+// );
 export default route;

@@ -12,6 +12,7 @@ const userSchema = new Schema({
   isRegistered: { type: Boolean, default: false },
   registrationDate: { type: Date },
   lastLoginDate: { type: Date },
+  imageurl: { type: String }, 
 },{timestamp:true});
 
 const User = mongoose.model('RealEstateUser', userSchema);
