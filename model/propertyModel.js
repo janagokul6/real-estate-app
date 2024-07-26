@@ -4,14 +4,16 @@ const { Schema } = mongoose;
 
 const propertySchema = new Schema({
     title: { type: String, required: true, trim: true },
-    type: { type: String, required: true,  },
+    type: { type: String, required: true },
+    category: { type: String }, // Added category
     bedrooms: { type: Number, required: true, min: 0 },
     bathrooms: { type: Number, required: true, min: 0 },
     squareFeet: { type: Number, required: true, min: 0 },
     price: { type: Number, required: true, min: 0 },
     description: { type: String, required: true },
     features: [{ type: String }],
-    status: { type: String},
+    status: { type: String, enum: ["For Rent", "For Rent (Negotiable)"], required: true },
+    rentNegotiable: { type: Boolean, default: false }, // Added rentNegotiable
     location: {
         type: {
             type: String,
@@ -30,12 +32,19 @@ const propertySchema = new Schema({
         city: { type: String, required: true },
         state: { type: String, required: true },
         zip: { type: String, required: true },
-        country: { type: String, required: true }
+        country: { type: String, required: true, default: "India" }
     },
-    images: [{ type: String }], 
+    images: [{ type: String }],
     mainImage: { type: String }, // URL of the main image
-   
-    agentId: { type: mongoose.Schema.Types.ObjectId, required: true },
+    agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    furnishedType: { type: String}, // Added furnishedType
+    floorNumber: { type: String }, // Added floorNumber
+    parking: { type: Number }, // Added parking
+    preferredTenant: { type: String }, // Added preferredTenant
+    nextAvailableDate: { type: Date }, // Added nextAvailableDate
+    petFriendly: { type: Boolean, default: false }, // Added petFriendly
+    gatedSociety: { type: Boolean, default: false }, // Added gatedSociety
+    brokerage: { type: String }, // Added brokerage
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
