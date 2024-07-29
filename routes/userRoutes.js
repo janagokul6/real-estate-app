@@ -38,14 +38,19 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const uploadDir = 'uploads/profiles';
-const BASE_URL = 'http://localhost:5500/uploads/profiles';
+
+
+const uploadDir = 'uploads/';
+const BASE_URL = 'http://localhost:5500/uploads/';
 // Configure multer storage
 
 // Ensure upload directory exists
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Ensure upload directory exists
+(async () => {
+  if (!await fs.existsSync(uploadDir)) {
+    await fs.mkdir(uploadDir, { recursive: true });
+  }
+})();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -113,37 +118,60 @@ route.post("/login", async (req, res) => {
   }
 });
 
-route.patch("/update/:id", upload.single('image'), async (req, res) => {
+route.patch("/updateuser/:id", async (req, res) => {
   const { id } = req.params;
-  const updatableData = { ...req.body };
+  const { imageurl, ...updatableData } = req.body;
 
   try {
-    const userData = await User.findOne({ _id: id });
-    if (!userData) return res.status(403).send({ message: "No user exists" });
+    const userData = await User.findById(id);
+    if (!userData) return res.status(404).json({ message: "User not found" });
 
-    // Handle image upload
-    if (req.file) {
-      const imageFileName = `profiles_${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+    let newImagePath = userData.image; // Default to existing image path
+
+    // Handle base64 image
+    if (imageurl) {
+      // Extract image data and format from base64 string
+      const matches = imageurl.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+
+      if (matches.length !== 3) {
+        return res.status(400).json({ message: 'Invalid base64 string' });
+      }
+
+      const imageType = matches[1]; 
+      console.log({imageType})
+      const imageBase64 = matches[2];
+      const imageFileName = `profiles_${Date.now()}.${imageType}`;
+      console.log({imageFileName })
       const imagePath = path.join(uploadDir, imageFileName);
 
-      // Move the file to the upload directory
-      fs.renameSync(req.file.path, imagePath);
+      // Save the base64 image to a file
+      fs.writeFileSync(imagePath, imageBase64, 'base64');
 
-      // Update the image URL in the user data
-      updatableData.imageurl = `${BASE_URL}${imageFileName}`;
+      // Update the image path
+      newImagePath = `${BASE_URL}${imageFileName}`;
+      console.log(newImagePath)
     }
 
-    const updatedData = await User.findOneAndUpdate(
-      { _id: id },
-      { $set: updatableData },
-      { new: true }
-    );
+    // Update user data
+    const updatedUser = await User.findByIdAndUpdate(id, {
+      ...updatableData,
+      imageurl: newImagePath
+    }, { new: true });
 
-    const { password, ...userDetails } = updatedData._doc;
-    return res.status(200).json({ message: "User updated successfully", user: userDetails });
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Prepare response without password field
+    const { password, ...userDetails } = updatedUser.toObject();
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: userDetails
+    });
   } catch (error) {
-    console.log(error);
-    return res.status(500).send({ message: "Something went wrong" });
+    console.error('Error in updateuser route:', error);
+    return res.status(500).json({ message: "Something went wrong", error: error.message });
   }
 });
 route.post("/forgot-password", async (req, res) => {
