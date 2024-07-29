@@ -41,7 +41,7 @@ cloudinary.v2.config({
 
 
 const uploadDir = 'uploads/';
-const BASE_URL = 'http://localhost:5500/uploads/';
+const BASE_URL = 'http://95.216.209.46:5500/uploads/';
 // Configure multer storage
 
 // Ensure upload directory exists
