@@ -119,25 +119,222 @@ export const getProperties = async (req, res) => {
 };
 
 // Get properties near a location-------------------------------------->
+// export const getPropertiesNear = async (req, res) => {
+//   const {
+//     longitude,
+//     latitude,
+//     maxDistance,
+//     minPrice,
+//     maxPrice,
+//     propertyType,
+//     minBedrooms,
+//     maxBedrooms,
+//     minBathrooms,
+//     maxBathrooms,
+//     minArea,
+//     maxArea,
+//   } = req.query;
+
+//   try {
+//     let locationQuery = {};
+//     let baseQuery = [];
+
+//     // Add location filter
+//     if (longitude && latitude && maxDistance) {
+//       locationQuery.location = {
+//         $near: {
+//           $geometry: {
+//             type: 'Point',
+//             coordinates: [parseFloat(longitude), parseFloat(latitude)]
+//           },
+//           $maxDistance: parseInt(maxDistance)
+//         }
+//       };
+//     }
+
+//     // Add price range filter
+//     let priceQuery = {};
+//     if (minPrice || maxPrice) {
+//       priceQuery.price = {};
+//       if (minPrice) priceQuery.price.$gte = parseFloat(minPrice);
+//       if (maxPrice) priceQuery.price.$lte = parseFloat(maxPrice);
+//       baseQuery.push(priceQuery);
+//     }
+
+//     // Add property type filter
+//     if (propertyType) {
+//       baseQuery.push({ type: propertyType });
+//     }
+
+//     // Add bedrooms filter
+//     let bedroomsQuery = {};
+//     if (minBedrooms || maxBedrooms) {
+//       bedroomsQuery.bedrooms = {};
+//       if (minBedrooms) bedroomsQuery.bedrooms.$gte = parseInt(minBedrooms);
+//       if (maxBedrooms) bedroomsQuery.bedrooms.$lte = parseInt(maxBedrooms);
+//       baseQuery.push(bedroomsQuery);
+//     }
+
+//     // Add bathrooms filter
+//     let bathroomsQuery = {};
+//     if (minBathrooms || maxBathrooms) {
+//       bathroomsQuery.bathrooms = {};
+//       if (minBathrooms) bathroomsQuery.bathrooms.$gte = parseFloat(minBathrooms);
+//       if (maxBathrooms) bathroomsQuery.bathrooms.$lte = parseFloat(maxBathrooms);
+//       baseQuery.push(bathroomsQuery);
+//     }
+
+//     // Add area filter
+//     let areaQuery = {};
+//     if (minArea || maxArea) {
+//       areaQuery.squareFeet = {};
+//       if (minArea) areaQuery.squareFeet.$gte = parseFloat(minArea);
+//       if (maxArea) areaQuery.squareFeet.$lte = parseFloat(maxArea);
+//       baseQuery.push(areaQuery);
+//     }
+
+//     // Combine base queries with $or
+//     let query = baseQuery.length > 0 ? { $or: baseQuery } : {};
+
+//     // First, query for properties within the location range
+//     let properties = [];
+//     if (Object.keys(locationQuery).length > 0) {
+//       properties = await Property.find({ ...locationQuery, ...query });
+
+//       // If properties found in location range, return them
+//       if (properties.length > 0) {
+//         return res.status(200).json(properties);
+//       }
+//     }
+
+//     // If no properties in location range, query without location filter
+//     if (baseQuery.length > 0) {
+//       properties = await Property.find(query);
+//     }
+
+//     if (properties.length > 0) {
+//       res.status(200).json({
+//         message: "No properties found within the specified location range, but properties matching other criteria are available.",
+//         properties: properties
+//       });
+//     } else {
+//       res.status(200).json({
+//         message: "No properties found within the specified location range and no properties match the other criteria."
+//       });
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 export const getPropertiesNear = async (req, res) => {
-    const { longitude, latitude, maxDistance } = req.query;
-    try {
-        const properties = await Property.find({
-            location: {
-                $near: {
-                    $geometry: {
-                        type: 'Point',
-                        coordinates: [parseFloat(longitude), parseFloat(latitude)]
-                    },
-                    $maxDistance: parseInt(maxDistance)
-                }
-            }
-        });
-        res.status(200).json(properties);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  const {
+    longitude,
+    latitude,
+    maxDistance,
+    minPrice,
+    maxPrice,
+    propertyType,
+    minBedrooms,
+    maxBedrooms,
+    minBathrooms,
+    maxBathrooms,
+    minArea,
+    maxArea,
+  } = req.query;
+
+  try {
+    let locationQuery = {};
+    let baseQuery = [];
+
+    // Add location filter
+    if (longitude && latitude && maxDistance) {
+      locationQuery.location = {
+        $near: {
+          $geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)]
+          },
+          $maxDistance: parseInt(maxDistance)
+        }
+      };
     }
+
+    // Add price range filter
+    let priceQuery = {};
+    if (minPrice || maxPrice) {
+      priceQuery.price = {};
+      if (minPrice) priceQuery.price.$gte = parseFloat(minPrice);
+      if (maxPrice) priceQuery.price.$lte = parseFloat(maxPrice);
+      baseQuery.push(priceQuery);
+    }
+
+    // Add property type filter
+    if (propertyType) {
+      const propertyTypes = propertyType.split(',');
+      baseQuery.push({ type: { $in: propertyTypes } });
+    }
+
+    // Add bedrooms filter
+    let bedroomsQuery = {};
+    if (minBedrooms || maxBedrooms) {
+      bedroomsQuery.bedrooms = {};
+      if (minBedrooms) bedroomsQuery.bedrooms.$gte = parseInt(minBedrooms);
+      if (maxBedrooms) bedroomsQuery.bedrooms.$lte = parseInt(maxBedrooms);
+      baseQuery.push(bedroomsQuery);
+    }
+
+    // Add bathrooms filter
+    let bathroomsQuery = {};
+    if (minBathrooms || maxBathrooms) {
+      bathroomsQuery.bathrooms = {};
+      if (minBathrooms) bathroomsQuery.bathrooms.$gte = parseFloat(minBathrooms);
+      if (maxBathrooms) bathroomsQuery.bathrooms.$lte = parseFloat(maxBathrooms);
+      baseQuery.push(bathroomsQuery);
+    }
+
+    // Add area filter
+    let areaQuery = {};
+    if (minArea || maxArea) {
+      areaQuery.squareFeet = {};
+      if (minArea) areaQuery.squareFeet.$gte = parseFloat(minArea);
+      if (maxArea) areaQuery.squareFeet.$lte = parseFloat(maxArea);
+      baseQuery.push(areaQuery);
+    }
+
+    // Combine base queries with $and
+    let query = baseQuery.length > 0 ? { $and: baseQuery } : {};
+
+    // First, query for properties within the location range
+    let properties = [];
+    if (Object.keys(locationQuery).length > 0) {
+      properties = await Property.find({ ...locationQuery, ...query });
+
+      // If properties found in location range, return them
+      if (properties.length > 0) {
+        return res.status(200).json(properties);
+      }
+    }
+
+    // If no properties in location range, query without location filter
+    if (baseQuery.length > 0) {
+      properties = await Property.find(query);
+    }
+
+    if (properties.length > 0) {
+      res.status(200).json({
+        message: "No properties found within the specified location range, but properties matching other criteria are available.",
+        properties: properties
+      });
+    } else {
+      res.status(200).json({
+        message: "No properties found within the specified location range and no properties match the other criteria."
+      });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
+
 
 // Update a property by ID------------------------------------------->
 export const updateProperty = async (req, res) => {

@@ -13,7 +13,7 @@ router.get('/properties', getProperties);
 router.put('/properties/:id', updateProperty);
 
 // Route to get properties near a location
-router.get('/properties/near', getPropertiesNear);
+router.get('/properties/search', getPropertiesNear);
 router.get('/properties/:agentId', getPropertiesByAgent );
 
 
