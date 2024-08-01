@@ -356,6 +356,7 @@ export const getPropertiesNear = async (req, res) => {
 // Update a property by ID------------------------------------------->
 export const updateProperty = async (req, res) => {
   try {
+    const { id } = req.params;
     const {
       title,
       type,
