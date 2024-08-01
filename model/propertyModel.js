@@ -12,7 +12,7 @@ const propertySchema = new Schema({
     price: { type: Number, required: true, min: 0 },
     description: { type: String, required: true },
     features: [{ type: String }],
-    status: { type: String, enum: ["For Rent", "For Rent (Negotiable)"], required: true },
+    status: { type:  Boolean, required: true },
     rentNegotiable: { type: Boolean, default: false }, // Added rentNegotiable
     location: {
         type: {
@@ -37,14 +37,14 @@ const propertySchema = new Schema({
     images: [{ type: String }],
     mainImage: { type: String }, // URL of the main image
     agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    furnishedType: { type: String}, // Added furnishedType
-    floorNumber: { type: String }, // Added floorNumber
-    parking: { type: Number }, // Added parking
-    preferredTenant: { type: String }, // Added preferredTenant
-    nextAvailableDate: { type: Date }, // Added nextAvailableDate
-    petFriendly: { type: Boolean, default: false }, // Added petFriendly
-    gatedSociety: { type: Boolean, default: false }, // Added gatedSociety
-    brokerage: { type: String }, // Added brokerage
+    furnishedType: { type: String,required: true}, // Added furnishedType
+    floorNumber: { type: String ,required: true}, // Added floorNumber
+    parking: { type: Number,required: true }, // Added parking
+    preferredTenant: { type: String,required: true }, // Added preferredTenant
+    nextAvailableDate: { type: Date,required: true }, // Added nextAvailableDate
+    petFriendly: { type: Boolean,required: true},// Added petFriendly
+    gatedSociety: { type: Boolean,required: true},// Added gatedSociety
+    brokerage: { type: String,required: true }, // Added brokerage
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });

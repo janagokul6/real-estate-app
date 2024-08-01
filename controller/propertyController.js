@@ -25,6 +25,15 @@ export const createProperty = async (req, res) => {
       status,
       location,
       agentId,
+      furnishedType,
+      floorNumber,
+      parking,
+      preferredTenant,
+      nextAvailableDate,
+      petFriendly,
+      gatedSociety,
+      brokerage,
+      images = []
     } = req.body;
 
     let processedImages = [];
@@ -77,7 +86,15 @@ export const createProperty = async (req, res) => {
       location: typeof location === 'string' ? JSON.parse(location) : location,
       agentId,
       images: processedImages.length > 0 ? processedImages.map(img => img.path) : [],
-      mainImage: processedImages.length > 0 ? processedImages[0].path : null
+      mainImage: processedImages.length > 0 ? processedImages[0].path : null,
+      furnishedType,
+      floorNumber,
+      parking,
+      preferredTenant,
+      nextAvailableDate,
+      petFriendly,
+      gatedSociety,
+      brokerage
     });
 
     await newProperty.save();
@@ -339,7 +356,6 @@ export const getPropertiesNear = async (req, res) => {
 // Update a property by ID------------------------------------------->
 export const updateProperty = async (req, res) => {
   try {
-    const { id } = req.params;
     const {
       title,
       type,
@@ -352,8 +368,16 @@ export const updateProperty = async (req, res) => {
       status,
       location,
       agentId,
-      images = [], // New images or base64 images to be updated
-    } = req.body;
+      images = [],
+      furnishedType,
+      floorNumber,
+      parking,
+      preferredTenant,
+      nextAvailableDate,
+      petFriendly,
+      gatedSociety,
+      brokerage
+  } = req.body;
 
     let processedImages = [];
 
@@ -391,7 +415,7 @@ export const updateProperty = async (req, res) => {
           filename: imageFileName,
           path: imagePath
         };
-      }));
+      }));  
     }
 
     // Find and update the property
@@ -408,7 +432,16 @@ export const updateProperty = async (req, res) => {
       location: typeof location === 'string' ? JSON.parse(location) : location,
       agentId,
       images: processedImages.length > 0 ? processedImages.map(img => img.path) : undefined,
-      mainImage: processedImages.length > 0 ? processedImages[0].path : undefined
+      mainImage: processedImages.length > 0 ? processedImages[0].path : undefined,
+      furnishedType,
+      floorNumber,
+      parking,
+      preferredTenant,
+      nextAvailableDate,
+      petFriendly,
+      gatedSociety,
+      brokerage,
+      updatedAt: Date.now()
     }, { new: true });
 
     if (!updatedProperty) {
