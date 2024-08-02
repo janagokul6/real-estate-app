@@ -35,7 +35,7 @@ export const createProperty = async (req, res) => {
       brokerage,
       images = []
     } = req.body;
-
+    const baseUrl ='http://95.216.209.46:5500/uploads/'
     let processedImages = [];
 
     // Handle images from file upload
@@ -110,7 +110,7 @@ export const createProperty = async (req, res) => {
         ...newProperty.toObject(),
         images: processedImages.map(img => ({
           filename: img.filename,
-          path: img.path
+          path:  `${baseUrl}/${path}`
         }))
       }
     });
@@ -379,7 +379,7 @@ export const updateProperty = async (req, res) => {
       gatedSociety,
       brokerage
   } = req.body;
-
+  const baseUrl ='http://95.216.209.46:5500/uploads/'
     let processedImages = [];
 
     // Handle new images from file upload
@@ -393,7 +393,8 @@ export const updateProperty = async (req, res) => {
 
         return {
           filename: imageFileName,
-          path: imagePath
+          path: imagePath,
+   
         };
       });
     }
@@ -455,7 +456,7 @@ export const updateProperty = async (req, res) => {
         ...updatedProperty.toObject(),
         images: processedImages.map(img => ({
           filename: img.filename,
-          path: img.path
+          path:  `${baseUrl}${img.filename}`
         }))
       }
     });
