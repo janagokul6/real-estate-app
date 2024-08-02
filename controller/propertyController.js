@@ -11,6 +11,115 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// export const createProperty = async (req, res) => {
+//   try {
+//     const {
+//       title,
+//       type,
+//       bedrooms,
+//       bathrooms,
+//       squareFeet,
+//       price,
+//       description,
+//       features,
+//       status,
+//       location,
+//       agentId,
+//       furnishedType,
+//       floorNumber,
+//       parking,
+//       preferredTenant,
+//       nextAvailableDate,
+//       petFriendly,
+//       gatedSociety,
+//       brokerage,
+//       images = []
+//     } = req.body;
+//     const baseUrl ='http://95.216.209.46:5500/uploads/'
+//     let processedImages = [];
+
+//     // Handle images from file upload
+//     if (req.files && req.files.length > 0) {
+//       processedImages = req.files.map(file => {
+//         const imageFileName = `properties_${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+//         const imagePath = path.join(uploadDir, imageFileName);
+        
+//         // Move the file to the upload directory
+//         fs.renameSync(file.path, imagePath);
+
+//         return {
+//           filename: imageFileName,
+//           path: imagePath
+//         };
+//       });
+//     } else if (req.body.images && req.body.images.length > 0) {
+//       // Handle base64 encoded images
+//       processedImages = req.body.images.map((base64, index) => {
+//         const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        
+//         if (matches.length !== 3) {
+//           throw new Error('Invalid base64 string');
+//         }
+
+//         const imageFileName = `properties_${Date.now()}-image_${index + 1}.${matches[1].split('/')[1]}`;
+//         const imagePath = path.join(uploadDir, imageFileName);
+        
+//         fs.writeFileSync(imagePath, matches[2], 'base64');
+
+//         return {
+//           filename: imageFileName,
+//           path: imagePath
+//         };
+//       });
+//     }
+
+//     const newProperty = new Property({
+//       title,
+//       type,
+//       bedrooms: Number(bedrooms),
+//       bathrooms: Number(bathrooms),
+//       squareFeet: Number(squareFeet),
+//       price: Number(price),
+//       description,
+//       features: Array.isArray(features) ? features : JSON.parse(features || '[]'),
+//       status,
+//       location: typeof location === 'string' ? JSON.parse(location) : location,
+//       agentId,
+//       images: processedImages.length > 0 ? processedImages.map(img => img.path) : [],
+//       mainImage: processedImages.length > 0 ? processedImages[0].path : null,
+//       furnishedType,
+//       floorNumber,
+//       parking,
+//       preferredTenant,
+//       nextAvailableDate,
+//       petFriendly,
+//       gatedSociety,
+//       brokerage
+//     });
+
+//     await newProperty.save();
+
+//     let message = 'Property created successfully';
+//     if (processedImages.length === 0) {
+//       message += ' without images';
+//     }
+
+//     res.status(201).json({
+//       message: message,
+//       property: {
+//         ...newProperty.toObject(),
+//         images: processedImages.map(img => ({
+//           filename: img.filename,
+//           path:  `${baseUrl}/${path}`
+//         }))
+//       }
+//     });
+//   } catch (error) {
+//     console.error('Error in createProperty:', error);
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+// Get all properties
 export const createProperty = async (req, res) => {
   try {
     const {
@@ -35,7 +144,8 @@ export const createProperty = async (req, res) => {
       brokerage,
       images = []
     } = req.body;
-    const baseUrl ='http://95.216.209.46:5500/uploads/'
+
+    const baseUrl = process.env.BASE_URL || 'http://localhost:3000'; // Define your base URL
     let processedImages = [];
 
     // Handle images from file upload
@@ -47,10 +157,7 @@ export const createProperty = async (req, res) => {
         // Move the file to the upload directory
         fs.renameSync(file.path, imagePath);
 
-        return {
-          filename: imageFileName,
-          path: imagePath
-        };
+        return imageFileName;
       });
     } else if (req.body.images && req.body.images.length > 0) {
       // Handle base64 encoded images
@@ -66,10 +173,7 @@ export const createProperty = async (req, res) => {
         
         fs.writeFileSync(imagePath, matches[2], 'base64');
 
-        return {
-          filename: imageFileName,
-          path: imagePath
-        };
+        return imageFileName;
       });
     }
 
@@ -85,8 +189,8 @@ export const createProperty = async (req, res) => {
       status,
       location: typeof location === 'string' ? JSON.parse(location) : location,
       agentId,
-      images: processedImages.length > 0 ? processedImages.map(img => img.path) : [],
-      mainImage: processedImages.length > 0 ? processedImages[0].path : null,
+      images: processedImages,
+      mainImage: processedImages.length > 0 ? processedImages[0] : null,
       furnishedType,
       floorNumber,
       parking,
@@ -108,10 +212,11 @@ export const createProperty = async (req, res) => {
       message: message,
       property: {
         ...newProperty.toObject(),
-        images: processedImages.map(img => ({
-          filename: img.filename,
-          path:  `${baseUrl}/${path}`
-        }))
+        images: processedImages.map(filename => (
+          
+         `${BASE_URL}${filename}`
+        )),
+        mainImage: newProperty.mainImage ? `${BASE_URL}${newProperty.mainImage}` : null
       }
     });
   } catch (error) {
@@ -119,8 +224,6 @@ export const createProperty = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-// Get all properties
-
 export const getProperties = async (req, res) => {
   try {
     const properties = await Property.find();
@@ -354,6 +457,117 @@ export const getPropertiesNear = async (req, res) => {
 
 
 // Update a property by ID------------------------------------------->
+// export const updateProperty = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const {
+//       title,
+//       type,
+//       bedrooms,
+//       bathrooms,
+//       squareFeet,
+//       price,
+//       description,
+//       features,
+//       status,
+//       location,
+//       agentId,
+//       images = [],
+//       furnishedType,
+//       floorNumber,
+//       parking,
+//       preferredTenant,
+//       nextAvailableDate,
+//       petFriendly,
+//       gatedSociety,
+//       brokerage
+//   } = req.body;
+//   const baseUrl ='http://95.216.209.46:5500/uploads/'
+//     let processedImages = [];
+
+//     // Handle new images from file upload
+//     if (req.files && req.files.length > 0) {
+//       processedImages = req.files.map(file => {
+//         const imageFileName = `properties_${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+//         const imagePath = path.join(uploadDir, imageFileName);
+
+//         // Move the file to the upload directory
+//         fs.renameSync(file.path, imagePath);
+
+//         return {
+//           filename: imageFileName,
+//           path: imagePath,
+   
+//         };
+//       });
+//     }
+
+//     // Handle base64 encoded images
+//     if (images.length > 0) {
+//       processedImages = processedImages.concat(images.map((base64, index) => {
+//         const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+
+//         if (matches.length !== 3) {
+//           throw new Error('Invalid base64 string');
+//         }
+
+//         const imageFileName = `properties_${Date.now()}-image_${index + 1}.${matches[1].split('/')[1]}`;
+//         const imagePath = path.join(uploadDir, imageFileName);
+
+//         fs.writeFileSync(imagePath, matches[2], 'base64');
+
+//         return {
+//           filename: imageFileName,
+//           path: imagePath
+//         };
+//       }));  
+//     }
+
+//     // Find and update the property
+//     const updatedProperty = await Property.findByIdAndUpdate(id, {
+//       title,
+//       type,
+//       bedrooms: Number(bedrooms),
+//       bathrooms: Number(bathrooms),
+//       squareFeet: Number(squareFeet),
+//       price: Number(price),
+//       description,
+//       features: Array.isArray(features) ? features : JSON.parse(features || '[]'),
+//       status,
+//       location: typeof location === 'string' ? JSON.parse(location) : location,
+//       agentId,
+//       images: processedImages.length > 0 ? processedImages.map(img => img.path) : undefined,
+//       mainImage: processedImages.length > 0 ? processedImages[0].path : undefined,
+//       furnishedType,
+//       floorNumber,
+//       parking,
+//       preferredTenant,
+//       nextAvailableDate,
+//       petFriendly,
+//       gatedSociety,
+//       brokerage,
+//       updatedAt: Date.now()
+//     }, { new: true });
+
+//     if (!updatedProperty) {
+//       return res.status(404).json({ message: 'Property not found' });
+//     }
+
+//     res.status(200).json({
+//       message: 'Property updated successfully',
+//       property: {
+//         ...updatedProperty.toObject(),
+//         images: processedImages.map(img => ({
+//           filename: img.filename,
+//           path: img.path
+//         }))
+//       }
+//     });
+//   } catch (error) {
+//     console.error('Error in updateProperty:', error);
+//     res.status(400).json({ message: error.message });
+//   }
+// };
 export const updateProperty = async (req, res) => {
   try {
     const { id } = req.params;
@@ -378,50 +592,49 @@ export const updateProperty = async (req, res) => {
       petFriendly,
       gatedSociety,
       brokerage
-  } = req.body;
-  const baseUrl ='http://95.216.209.46:5500/uploads/'
+    } = req.body;
+
+    
     let processedImages = [];
+
+    // Find the existing property
+    const existingProperty = await Property.findById(id);
+    if (!existingProperty) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
 
     // Handle new images from file upload
     if (req.files && req.files.length > 0) {
       processedImages = req.files.map(file => {
         const imageFileName = `properties_${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
         const imagePath = path.join(uploadDir, imageFileName);
-
+        
         // Move the file to the upload directory
         fs.renameSync(file.path, imagePath);
 
-        return {
-          filename: imageFileName,
-          path: imagePath,
-   
-        };
+        return imageFileName;
       });
-    }
-
+    } 
     // Handle base64 encoded images
-    if (images.length > 0) {
-      processedImages = processedImages.concat(images.map((base64, index) => {
+    else if (images.length > 0) {
+      processedImages = images.map((base64, index) => {
         const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
-
+        
         if (matches.length !== 3) {
           throw new Error('Invalid base64 string');
         }
 
         const imageFileName = `properties_${Date.now()}-image_${index + 1}.${matches[1].split('/')[1]}`;
         const imagePath = path.join(uploadDir, imageFileName);
-
+        
         fs.writeFileSync(imagePath, matches[2], 'base64');
 
-        return {
-          filename: imageFileName,
-          path: imagePath
-        };
-      }));  
+        return imageFileName;
+      });
     }
 
-    // Find and update the property
-    const updatedProperty = await Property.findByIdAndUpdate(id, {
+    // Prepare the update object
+    const updateObject = {
       title,
       type,
       bedrooms: Number(bedrooms),
@@ -433,8 +646,6 @@ export const updateProperty = async (req, res) => {
       status,
       location: typeof location === 'string' ? JSON.parse(location) : location,
       agentId,
-      images: processedImages.length > 0 ? processedImages.map(img => img.path) : undefined,
-      mainImage: processedImages.length > 0 ? processedImages[0].path : undefined,
       furnishedType,
       floorNumber,
       parking,
@@ -444,7 +655,16 @@ export const updateProperty = async (req, res) => {
       gatedSociety,
       brokerage,
       updatedAt: Date.now()
-    }, { new: true });
+    };
+
+    // Update images only if new images are provided
+    if (processedImages.length > 0) {
+      updateObject.images = processedImages;
+      updateObject.mainImage = processedImages[0];
+    }
+
+    // Find and update the property
+    const updatedProperty = await Property.findByIdAndUpdate(id, updateObject, { new: true });
 
     if (!updatedProperty) {
       return res.status(404).json({ message: 'Property not found' });
@@ -454,10 +674,11 @@ export const updateProperty = async (req, res) => {
       message: 'Property updated successfully',
       property: {
         ...updatedProperty.toObject(),
-        images: processedImages.map(img => ({
-          filename: img.filename,
-          path:  `${baseUrl}${img.filename}`
-        }))
+        images: updatedProperty.images.map(filename => (
+          
+           `${BASE_URL}${filename}`
+        )),
+        mainImage: updatedProperty.mainImage ? `${BASE_URL}${updatedProperty.mainImage}` : null
       }
     });
   } catch (error) {
