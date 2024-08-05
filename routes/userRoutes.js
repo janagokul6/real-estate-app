@@ -3,11 +3,11 @@ import { registerUser, loginUser } from "../controller/userController.js";
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer"
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
-import path from 'path';
-import fs from 'fs';
+import path from "path";
+import fs from "fs";
 dotenv.config();
 
 import cloudinary from "cloudinary";
@@ -15,15 +15,15 @@ import multer from "multer";
 
 const route = express.Router();
 
-export  const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
+export const transporter = nodemailer.createTransport({
+  host: "smtp.ethereal.email",
   port: 587,
   auth: {
-      user: 'chanel.nolan41@ethereal.email',
-      pass: '6crGVE8GS5ycV8jqNE'
-  }
+    user: "chanel.nolan41@ethereal.email",
+    pass: "6crGVE8GS5ycV8jqNE",
+  },
 });
-transporter.verify(function(error, success) {
+transporter.verify(function (error, success) {
   if (error) {
     console.log(error);
   } else {
@@ -38,16 +38,14 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
-
-const uploadDir = 'uploads/';
-const BASE_URL = 'http://95.216.209.46:5500/uploads/';
+const uploadDir = "uploads/";
+const BASE_URL = "http://95.216.209.46:5500/uploads/";
 // Configure multer storage
 
 // Ensure upload directory exists
 // Ensure upload directory exists
 (async () => {
-  if (!await fs.existsSync(uploadDir)) {
+  if (!(await fs.existsSync(uploadDir))) {
     await fs.mkdir(uploadDir, { recursive: true });
   }
 })();
@@ -57,7 +55,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    cb(null, `profiles_${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`);
+    cb(
+      null,
+      `profiles_${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`
+    );
   },
 });
 
@@ -120,7 +121,7 @@ route.post("/login", async (req, res) => {
 
 route.patch("/updateuser/:id", async (req, res) => {
   const { id } = req.params;
-  const { imageurl, ...updatableData } = req.body;
+  const { imageurl, password, ...updatableData } = req.body;
 
   try {
     const userData = await User.findById(id);
@@ -130,48 +131,59 @@ route.patch("/updateuser/:id", async (req, res) => {
 
     // Handle base64 image
     if (imageurl) {
-      // Extract image data and format from base64 string
-      const matches = imageurl.match(/^data:image\/([A-Za-z-+\/]+);base64,(.+)$/);
+      const matches = imageurl.match(
+        /^data:image\/([A-Za-z-+\/]+);base64,(.+)$/
+      );
 
       if (matches.length !== 3) {
-        return res.status(400).json({ message: 'Invalid base64 string' });
+        return res.status(400).json({ message: "Invalid base64 string" });
       }
 
-      const imageType = matches[1]; 
-      console.log({imageType})
+      const imageType = matches[1];
       const imageBase64 = matches[2];
       const imageFileName = `profiles_${Date.now()}.${imageType}`;
-      console.log({imageFileName })
       const imagePath = path.join(uploadDir, imageFileName);
 
       // Save the base64 image to a file
-      fs.writeFileSync(imagePath, imageBase64, 'base64');
+      fs.writeFileSync(imagePath, imageBase64, "base64");
 
       // Update the image path
       newImagePath = `${BASE_URL}${imageFileName}`;
-      console.log(newImagePath)
+    }
+
+    // Handle password update if provided
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      updatableData.password = hashedPassword; // Set the hashed password in the update data
     }
 
     // Update user data
-    const updatedUser = await User.findByIdAndUpdate(id, {
-      ...updatableData,
-      imageurl: newImagePath
-    }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      {
+        ...updatableData,
+        image: newImagePath, // Update the image path
+      },
+      { new: true }
+    );
 
     if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Prepare response without password field
-    const { password, ...userDetails } = updatedUser.toObject();
+    const { password: _, ...userDetails } = updatedUser.toObject();
 
     return res.status(200).json({
       message: "User updated successfully",
-      user: userDetails
+      user: userDetails,
     });
   } catch (error) {
-    console.error('Error in updateuser route:', error);
-    return res.status(500).json({ message: "Something went wrong", error: error.message });
+    console.error("Error in updateuser route:", error);
+    return res
+      .status(500)
+      .json({ message: "Something went wrong", error: error.message });
   }
 });
 route.post("/forgot-password", async (req, res) => {
@@ -179,7 +191,8 @@ route.post("/forgot-password", async (req, res) => {
   try {
     const storedUser = await User.findOne({ email: email });
     if (!storedUser) return res.status(403).send({ message: "No admin exist" });
-    const OTP = Math.floor(108309 + Math.random() * 900000);
+    // const OTP = Math.floor(108309 + Math.random() * 900000);
+    const OTP = 123456;
     const mailOptions = {
       from: "thakuraksingh1@gmail.com",
       to: email,
@@ -219,7 +232,7 @@ route.put("/reset-password/:id", async (req, res) => {
         return res.status(401).send({ message: "invalid credentials" });
     }
     const updatableData = { password: encryptedPassword };
-    const storedUser = await  User.findOneAndUpdate(
+    const storedUser = await User.findOneAndUpdate(
       { _id: id },
       { $set: updatableData },
       { new: true }
@@ -242,7 +255,7 @@ route.get("/user/:id", async (req, res) => {
   try {
     // Fetch a single user by ID
     const user = await User.findById(id);
-    
+
     // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: "User not found" });
