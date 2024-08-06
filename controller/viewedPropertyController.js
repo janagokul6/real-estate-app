@@ -35,7 +35,7 @@ export const getViewedProperties = async (req, res) => {
     const formattedViewedProps = viewedProps.map(vp => {
       const property = vp.propertyId;
       return {
-        viewedAt: vp.createdAt,
+       
         property: {
           id: property?._id,
           title: property?.title,
@@ -68,7 +68,8 @@ export const getViewedProperties = async (req, res) => {
           gatedSociety: property?.gatedSociety,
           brokerage: property?.brokerage,
           createdAt: property?.createdAt,
-          updatedAt: property?.updatedAt
+          updatedAt: property?.updatedAt,
+          viewedAt: vp.createdAt
         }
       };
     });
