@@ -1,5 +1,8 @@
 import viewedProperties from "../model/viewedPropertyModel.js";
 import Property from "../model/propertyModel.js"; // Make sure to import your Property model
+import path from 'path';
+
+const BASE_URL = 'http://95.216.209.46:5500/uploads/';
 
 export const createViewedProperty = async (req, res) => {
   try {
@@ -54,8 +57,8 @@ export const getViewedProperties = async (req, res) => {
             country: property.location.country,
             coordinates: property.location.coordinates
           },
-          mainImage: property.mainImage,
-          images: property.images,
+          mainImage: property.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
+          images: property.images.map(image => `${BASE_URL}${path.basename(image)}`),
           furnishedType: property.furnishedType,
           floorNumber: property.floorNumber,
           parking: property.parking,
