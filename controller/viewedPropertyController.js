@@ -37,44 +37,45 @@ export const getViewedProperties = async (req, res) => {
       return {
         viewedAt: vp.createdAt,
         property: {
-          id: property._id,
-          title: property.title,
-          type: property.type,
-          category: property.category,
-          bedrooms: property.bedrooms,
-          bathrooms: property.bathrooms,
-          squareFeet: property.squareFeet,
-          price: property.price,
-          description: property.description,
-          features: property.features,
-          status: property.status,
-          rentNegotiable: property.rentNegotiable,
+          id: property?._id,
+          title: property?.title,
+          type: property?.type,
+          category: property?.category,
+          bedrooms: property?.bedrooms,
+          bathrooms: property?.bathrooms,
+          squareFeet: property?.squareFeet,
+          price: property?.price,
+          description: property?.description,
+          features: property?.features,
+          status: property?.status,
+          rentNegotiable: property?.rentNegotiable,
           location: {
-            address: property.location.address,
-            city: property.location.city,
-            state: property.location.state,
-            zip: property.location.zip,
-            country: property.location.country,
-            coordinates: property.location.coordinates
+            address: property?.location.address,
+            city: property?.location.city,
+            state: property?.location.state,
+            zip: property?.location.zip,
+            country: property?.location.country,
+            coordinates: property?.location.coordinates
           },
-          mainImage: property.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
-          images: property.images.map(image => `${BASE_URL}${path.basename(image)}`),
-          furnishedType: property.furnishedType,
-          floorNumber: property.floorNumber,
-          parking: property.parking,
-          preferredTenant: property.preferredTenant,
-          nextAvailableDate: property.nextAvailableDate,
-          petFriendly: property.petFriendly,
-          gatedSociety: property.gatedSociety,
-          brokerage: property.brokerage,
-          createdAt: property.createdAt,
-          updatedAt: property.updatedAt
+          mainImage: property?.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
+          images:  (property?.images || []).map(image => `${BASE_URL}${path.basename(image)}`),
+          furnishedType: property?.furnishedType,
+          floorNumber: property?.floorNumber,
+          parking: property?.parking,
+          preferredTenant: property?.preferredTenant,
+          nextAvailableDate: property?.nextAvailableDate,
+          petFriendly: property?.petFriendly,
+          gatedSociety: property?.gatedSociety,
+          brokerage: property?.brokerage,
+          createdAt: property?.createdAt,
+          updatedAt: property?.updatedAt
         }
       };
     });
 
     res.send(formattedViewedProps);
   } catch (err) {
+    console.log(err)
     res.status(500).send(err);
   }
 };
