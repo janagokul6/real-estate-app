@@ -12,6 +12,7 @@ const propertySchema = new Schema({
     price: { type: Number, required: true, min: 0 },
     description: { type: String, required: true },
     features: [{ type: String }],
+    is_featured: { type: Number, required: true,  default: 0 },
     status: { type:  Boolean, required: true },
     rentNegotiable: { type: Boolean, default: false }, // Added rentNegotiable
     location: {

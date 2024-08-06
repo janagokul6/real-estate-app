@@ -9,6 +9,10 @@ import userRoutes
  from "./routes/userRoutes.js";
  import agentRoutes from './routes/agentRoutes.js';
  import propertyRoutes from './routes/propertyRotes.js';
+ import recentSearchesRoute from './routes/recentSearchesRoutes.js'
+ import viewedPropertyRoute from './routes/viewedPropertyRoutes.js'
+ import suggestedPropertiesRoute from './routes/suggestedPropertiesRoutes.js'
+ import featuredPropertiesRoute from './routes/featuredPropertiesRoutes.js'
 const app= express();
 
 
@@ -26,6 +30,10 @@ app.use('/uploads/profiles', express.static(path.join(__dirname, 'uploads/profil
 app.use("/api", userRoutes);
 app.use("/api", propertyRoutes);
 app.use("/api", agentRoutes);
+app.use("/api", recentSearchesRoute );
+app.use("/api", viewedPropertyRoute );
+app.use("/api", suggestedPropertiesRoute  );
+app.use("/api", featuredPropertiesRoute );
   
  connectToDB().then(()=>{
     app.listen(PORT, ()=>{
