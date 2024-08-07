@@ -426,28 +426,38 @@ export const getPropertiesNear = async (req, res) => {
 
     // First, query for properties within the location range
     let properties = [];
+    let message = "";
+
     if (Object.keys(locationQuery).length > 0) {
       properties = await Property.find({ ...locationQuery, ...query });
-
-      // If properties found in location range, return them
       if (properties.length > 0) {
-        return res.status(200).json(properties);
+        message = "Properties found within the specified location range and criteria.";
       }
     }
 
-    // If no properties in location range, query without location filter
-    if (baseQuery.length > 0) {
+    if (properties.length === 0 && baseQuery.length > 0) {
       properties = await Property.find(query);
+      if (properties.length > 0) {
+        message = "No properties found within the specified location range, but properties matching other criteria are available.";
+      }
     }
 
+    const processImageUrls = (property) => ({
+      ...property.toObject(),
+      images: property.images.map(image => `${BASE_URL}${path.basename(image)}`),
+      mainImage: property.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
+    });
+
     if (properties.length > 0) {
+      const propertiesWithFullImagePaths = properties.map(processImageUrls);
+
       res.status(200).json({
-        message: "No properties found within the specified location range, but properties matching other criteria are available.",
-        properties: properties
+        message,
+        properties: propertiesWithFullImagePaths
       });
     } else {
       res.status(200).json({
-        message: "No properties found within the specified location range and no properties match the other criteria."
+        message: "No properties found matching the specified criteria."
       });
     }
   } catch (error) {
