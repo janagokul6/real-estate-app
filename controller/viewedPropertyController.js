@@ -5,14 +5,27 @@ import path from 'path';
 const BASE_URL = 'http://95.216.209.46:5500/uploads/';
 
 export const createViewedProperty = async (req, res) => {
-  try {
-    const viewedProperty = new viewedProperties(req.body);
-    await viewedProperty.save();
-    res.status(201).send(viewedProperty);
-  } catch (err) {
-    res.status(400).send(err);
-  }
-};
+    try {
+      const { userId, propertyId } = req.body;
+  
+      // Check if the property has already been viewed by this user
+      const existingView = await viewedProperties.findOne({ userId, propertyId });
+  
+      if (existingView) {
+        // If it exists, update the createdAt timestamp
+        existingView.createdAt = new Date();
+        await existingView.save();
+        res.status(200).send(existingView);
+      } else {
+        // If it doesn't exist, create a new entry
+        const viewedProperty = new viewedProperties(req.body);
+        await viewedProperty.save();
+        res.status(201).send(viewedProperty);
+      }
+    } catch (err) {
+      res.status(400).send(err);
+    }
+  };
 
 export const getViewedProperties = async (req, res) => {
   try {

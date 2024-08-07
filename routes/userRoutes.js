@@ -128,6 +128,7 @@ route.patch("/updateuser/:id", async (req, res) => {
     if (!userData) return res.status(404).json({ message: "User not found" });
 
     let newImagePath = userData.image; // Default to existing image path
+    let imageUpdated = false;
 
     // Handle base64 image
     if (imageurl) {
@@ -147,24 +148,36 @@ route.patch("/updateuser/:id", async (req, res) => {
       // Save the base64 image to a file
       fs.writeFileSync(imagePath, imageBase64, "base64");
 
+      // Delete previous image if it exists
+      if (userData.image && userData.image.startsWith(BASE_URL)) {
+        const oldImagePath = path.join(uploadDir, userData.image.split('/').pop());
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+
       // Update the image path
       newImagePath = `${BASE_URL}${imageFileName}`;
+      imageUpdated = true;
     }
 
     // Handle password update if provided
     if (password) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
-      updatableData.password = hashedPassword; // Set the hashed password in the update data
+      updatableData.password = hashedPassword;
+    }
+
+    // Prepare update object with only provided fields
+    const updateObject = Object.keys(updatableData).length > 0 ? updatableData : {};
+    if (imageUpdated) {
+      updateObject.imageurl = newImagePath;
     }
 
     // Update user data
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      {
-        ...updatableData,
-        image: newImagePath, // Update the image path
-      },
+      updateObject,
       { new: true }
     );
 
@@ -178,6 +191,7 @@ route.patch("/updateuser/:id", async (req, res) => {
     return res.status(200).json({
       message: "User updated successfully",
       user: userDetails,
+      // newImageUrl: imageUpdated ? newImagePath : undefined
     });
   } catch (error) {
     console.error("Error in updateuser route:", error);
@@ -186,69 +200,7 @@ route.patch("/updateuser/:id", async (req, res) => {
       .json({ message: "Something went wrong", error: error.message });
   }
 });
-route.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-  try {
-    const storedUser = await User.findOne({ email: email });
-    if (!storedUser) return res.status(403).send({ message: "No admin exist" });
-    // const OTP = Math.floor(108309 + Math.random() * 900000);
-    const OTP = 123456;
-    const mailOptions = {
-      from: "thakuraksingh1@gmail.com",
-      to: email,
-      subject: "One-Time Password (OTP) for Verification",
-      text: `Your OTP is: ${OTP}`,
-    };
-    const result = await transporter.sendMail(mailOptions);
-    return res.status(200).json({
-      otp: OTP,
-      message: "Email Sent Successfully!",
-      id: storedUser._id,
-    });
-  } catch (error) {
-    if (error.message === "Not Found") {
-      return res.status(409).json({ message: "user does not exists" });
-    } else {
-      return res.status(501).json({ message: "something went wrong" });
-    }
-  }
-});
-route.put("/reset-password/:id", async (req, res) => {
-  const { id } = req.params;
-  const { currentPassword, password } = req.body;
-  const newPassword = password;
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const encryptedPassword = await bcrypt.hash(newPassword, salt);
-    if (currentPassword) {
-      const UserData = await User.findOne({ _id: id });
-      if (!UserData) return res.status(403).send({ message: "No user exist" });
 
-      const comparePassword = await bcrypt.compare(
-        newPassword,
-        UserData.password
-      );
-      if (!comparePassword)
-        return res.status(401).send({ message: "invalid credentials" });
-    }
-    const updatableData = { password: encryptedPassword };
-    const storedUser = await User.findOneAndUpdate(
-      { _id: id },
-      { $set: updatableData },
-      { new: true }
-    );
-    const { password, ...userDetails } = storedUser._doc;
-    return res
-      .status(200)
-      .json({ user: userDetails, message: "password updated successfully" });
-  } catch (error) {
-    if (error.message === "Not Found") {
-      return res.status(409).json({ message: "user does not exists" });
-    } else {
-      return res.status(501).json({ message: "something went wrong" });
-    }
-  }
-});
 route.get("/user/:id", async (req, res) => {
   const { id } = req.params;
 
