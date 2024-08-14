@@ -75,6 +75,7 @@ export const getViewedProperties = async (req, res) => {
           furnishedType: property?.furnishedType,
           floorNumber: property?.floorNumber,
           parking: property?.parking,
+          agentId:property?.agentId,
           preferredTenant: property?.preferredTenant,
           nextAvailableDate: property?.nextAvailableDate,
           petFriendly: property?.petFriendly,
