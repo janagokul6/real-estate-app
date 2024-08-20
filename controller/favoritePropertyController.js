@@ -1,3 +1,4 @@
+import { clearLine } from "readline";
 import favoriteProperties from "../model/favoritePropertyModel.js";
 import Property from "../model/propertyModel.js"; // Make sure to import your Property model
 import path from 'path';
@@ -96,11 +97,12 @@ export const getFavoriteProperties = async (req, res) => {
 
 export const deleteProperty = async (req, res) => {
   try {
+    console.log(req.body)
     // Extract property ID from request parameters and user ID from request body or token
     const { propertyId } = req.params;
     const { userId } = req.body; // Assuming userId is sent in the request body
 
-
+console.log({propertyId,userId})
     // Check if property ID and user ID are valid
     if (!propertyId || !userId) {
       return res.status(400).send({ message: 'Missing property ID or user ID' });
@@ -108,7 +110,7 @@ export const deleteProperty = async (req, res) => {
 
     // Find and delete the property by both propertyId and userId
     const propertyToDelete = await favoriteProperties.findOneAndDelete({
-      _id: propertyId,
+      propertyId: propertyId,
       userId: userId
     });
 
