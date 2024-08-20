@@ -119,3 +119,23 @@ console.log(propertyId)
     res.status(500).send({ message: 'Internal server error' });
   }
 };
+
+
+
+
+export const getFavPropertiesID = async (req, res) => {
+  try {
+    const userId = req.query.userId; // Assuming you're passing userId as a route parameter
+
+    if (!userId) {
+      return res.status(400).send({ error: 'User ID is required' });
+    }
+
+    const FavoriteProps = await favoriteProperties.find({ userId: userId })
+     
+    res.send(FavoriteProps);
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err);
+  }
+};
