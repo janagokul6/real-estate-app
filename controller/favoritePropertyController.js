@@ -96,20 +96,25 @@ export const getFavoriteProperties = async (req, res) => {
 
 export const deleteProperty = async (req, res) => {
   try {
-    // Extract property ID from request parameters
+    // Extract property ID from request parameters and user ID from request body or token
     const { propertyId } = req.params;
-console.log(propertyId)
-    // Check if property ID is valid (optional, you can use a validation library)
-    if (!propertyId) {
-      return res.status(400).send({ message: 'Missing property ID' });
+    const { userId } = req.body; // Assuming userId is sent in the request body
+
+
+    // Check if property ID and user ID are valid
+    if (!propertyId || !userId) {
+      return res.status(400).send({ message: 'Missing property ID or user ID' });
     }
 
-    // Find the property by ID
-    const propertyToDelete = await favoriteProperties.findOneAndDelete(propertyId);
+    // Find and delete the property by both propertyId and userId
+    const propertyToDelete = await favoriteProperties.findOneAndDelete({
+      _id: propertyId,
+      userId: userId
+    });
 
     // Check if property found
     if (!propertyToDelete) {
-      return res.status(404).send({ message: 'Property not found' });
+      return res.status(404).send({ message: 'Property not found or not associated with the user' });
     }
 
     // Send successful deletion response
