@@ -93,3 +93,29 @@ export const getFavoriteProperties = async (req, res) => {
     res.status(500).send(err);
   }
 };
+
+export const deleteProperty = async (req, res) => {
+  try {
+    // Extract property ID from request parameters
+    const { propertyId } = req.params;
+console.log(propertyId)
+    // Check if property ID is valid (optional, you can use a validation library)
+    if (!propertyId) {
+      return res.status(400).send({ message: 'Missing property ID' });
+    }
+
+    // Find the property by ID
+    const propertyToDelete = await favoriteProperties.findOneAndDelete(propertyId);
+
+    // Check if property found
+    if (!propertyToDelete) {
+      return res.status(404).send({ message: 'Property not found' });
+    }
+
+    // Send successful deletion response
+    res.status(200).send({ message: 'Property deleted from collection successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: 'Internal server error' });
+  }
+};
