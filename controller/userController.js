@@ -40,3 +40,87 @@ export const loginUser = async (email, password) => {
 };
 
 // module.exports = { registerUser, loginUser };
+export const getTotalUsers = async (req, res) => {
+  try {
+    // Define the role you want to check
+    const specificRole = 'user'; // Change this to the role you want to check
+
+    // Count all users
+    const totalCount = await User.countDocuments();
+
+    // Count users with the specific role
+    const roleCount = await User.countDocuments({ role: specificRole });
+
+    res.status(200).json({
+      totalUsers: roleCount,
+      userandadmin: totalCount,
+    });
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getTotalAgents = async (req, res) => {
+  try {
+    // Define the role you want to check
+    const specificRole = 'agent'; // Change this to the role you want to check
+
+    // Count all users
+    const totalCount = await User.countDocuments();
+
+    // Count users with the specific role
+    const roleCount = await User.countDocuments({ role: specificRole });
+
+    res.status(200).json({
+      totalAgents: roleCount,
+      userandadmin: totalCount,
+    });
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+export const getAllAgents = async (req, res) => {
+  try {
+    // Define the role you want to check
+    const specificRole = 'agent'; // Change this to the role you want to check
+
+    // Count all users
+    // const totalCount = await User.countDocuments();
+
+    // Count users with the specific role
+    const allAgents = await User.find({ role: specificRole });
+
+    res.status(200).json(
+      allAgents
+     
+    );
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getAllUsers = async (req, res) => {
+  try {
+    // Define the role you want to check
+    const specificRole = 'user'; // Change this to the role you want to check
+
+    // Count all users
+    // const totalCount = await User.countDocuments();
+
+    // Count users with the specific role
+    const users = await User.find({ role: specificRole });
+
+    res.status(200).json(
+      users
+     
+    );
+  } catch (error) {
+    console.error('Error fetching user count:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+

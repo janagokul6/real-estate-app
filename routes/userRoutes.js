@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser } from "../controller/userController.js";
+import { registerUser, loginUser ,getTotalUsers,getTotalAgents,getAllAgents,getAllUsers} from "../controller/userController.js";
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -97,6 +97,7 @@ route.post("/register", async (req, res) => {
 route.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const newPassword = password;
+  console.log(email)
   try {
     const AdminData = await User.findOne({ email: email });
     if (!AdminData) return res.status(403).send({ message: "No user exist" });
@@ -221,37 +222,9 @@ route.get("/user/:id", async (req, res) => {
   }
 });
 
-// Define the upload route
-// route.post(
-//   "/uploadImage",
-//   uploadedFile.single("uploadedfile"),
-//   async (req, res) => {
-//     try {
-//       console.log(req.body);
-//       if (!req.file) {
-//         res.send("Please upload your image first");
-//       } else {
-//         const savedFile = await cloudinary.v2.uploader.upload(req.file.path, {
-//           public_id: "testing",
-//         });
+route.get('/admin/totalusers', getTotalUsers);
+route.get('/admin/totalagents', getTotalAgents);
+route.get('/admin/allagents', getAllAgents);
+route.get('/admin/allusers', getAllUsers);
 
-//         console.log(savedFile);
-//         console.log(savedFile.secure_url);
-
-//         // Generate Cloudinary URL
-//         const url = cloudinary.v2.url("testing", {
-//           width: 100,
-//           height: 150,
-//           crop: "fill",
-//         });
-
-//         console.log(url);
-//         res.send("Image uploaded successfully");
-//       }
-//     } catch (err) {
-//       console.log(err);
-//       res.status(500).send("An error occurred while uploading the image");
-//     }
-//   }
-// );
 export default route;

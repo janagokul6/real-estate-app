@@ -12,7 +12,7 @@ const propertySchema = new Schema({
     price: { type: Number, required: true, min: 0 },
     description: { type: String, required: true },
     features: [{ type: String }],
-    is_featured: { type: Number, required: true,  default: 0 },
+    // is_featured: { type: Number, required: true,  default: 0 },
     status: { type:  Boolean, required: true },
     rentNegotiable: { type: Boolean, default: false }, // Added rentNegotiable
     location: {
@@ -46,6 +46,7 @@ const propertySchema = new Schema({
     petFriendly: { type: Boolean,required: true},// Added petFriendly
     gatedSociety: { type: Boolean,required: true},// Added gatedSociety
     brokerage: { type: String,required: true }, // Added brokerage
+    Is_featured: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });

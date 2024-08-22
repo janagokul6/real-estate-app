@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
-
+import cors from "cors"
 import {connectToDB} from "./db.js"
 import userRoutes
  from "./routes/userRoutes.js";
@@ -16,7 +16,7 @@ import userRoutes
  import  favoritePropertyRoute from './routes/favoritePropertyRoutes.js'
 const app= express();
 
-
+app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // app.use(bodyParser.json());
