@@ -1,5 +1,5 @@
 import express from "express";
-import { registerUser, loginUser ,getTotalUsers,getTotalAgents,getAllAgents,getAllUsers} from "../controller/userController.js";
+import { registerUser, loginUser ,getTotalUsers,getTotalAgents,getAllAgents,getAllUsers,deleteUser} from "../controller/userController.js";
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -226,5 +226,6 @@ route.get('/admin/totalusers', getTotalUsers);
 route.get('/admin/totalagents', getTotalAgents);
 route.get('/admin/allagents', getAllAgents);
 route.get('/admin/allusers', getAllUsers);
+route.delete('/deleteusers/:id', deleteUser);
 
 export default route;
