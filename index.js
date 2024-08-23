@@ -14,6 +14,7 @@ import userRoutes
  import suggestedPropertiesRoute from './routes/suggestedPropertiesRoutes.js'
  import featuredPropertiesRoute from './routes/featuredPropertiesRoutes.js'
  import  favoritePropertyRoute from './routes/favoritePropertyRoutes.js'
+ import notificationRoutes from './routes/notificationRoutes.js';
 const app= express();
 
 app.use(cors());
@@ -35,7 +36,8 @@ app.use("/api", recentSearchesRoute );
 app.use("/api", viewedPropertyRoute );
 app.use("/api", suggestedPropertiesRoute  );
 app.use("/api", featuredPropertiesRoute );
-app.use("/api",favoritePropertyRoute)
+app.use("/api",favoritePropertyRoute);
+app.use('/api/notifications', notificationRoutes);
   
  connectToDB().then(()=>{
     app.listen(PORT, ()=>{
