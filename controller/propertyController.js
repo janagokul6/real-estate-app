@@ -789,3 +789,30 @@ export const updatePropertystatus = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
+export const getAgentPropertiesCount = async (req, res) => {
+  try {
+    const { agentId } = req.params;
+
+    if (!agentId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Agent ID is required'
+      });
+    }
+
+    const count = await Property.countDocuments({ agentId: agentId });
+    
+    res.status(200).json({
+      success: true,
+      count: count
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching agent properties count',
+      error: error.message
+    });
+  }
+};
