@@ -1,5 +1,5 @@
 import Notification from '../model/notificationModel.js';
-
+const BASE_URL = 'http://95.216.209.46:5500/uploads/';
 export const createNotification = async (req, res) => {
   try {
     const { userId, agentId, propertyId } = req.body;
@@ -31,9 +31,15 @@ export const getAgentNotifications = async (req, res) => {
     const { agentId } = req.params;
 
     const notifications = await Notification.find({ agentId })
-      .populate('userId', 'name email phone')
+      .populate('userId', 'name email phone imageurl')
       .populate('propertyId', 'title type category bedrooms bathrooms squareFeet price location.address location.city')
       .sort('-createdAt');
+      // Add BASE_URL to image paths if they are present
+    notifications.forEach(notification => {
+        if (notification.imageurl) {
+          notification.imageurl = `${BASE_URL}${path.basename(notification.imageurl)}`;
+        }
+      });
 
     res.status(200).json({
       success: true,
