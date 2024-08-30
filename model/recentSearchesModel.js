@@ -9,7 +9,7 @@ const recentSearchesSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
-
+recentSearchesSchema.index({ userId: 1, searchText: 1 }, { unique: true });
 const recentSearches = mongoose.model('recentSearches', recentSearchesSchema);
 
 export default  recentSearches;
