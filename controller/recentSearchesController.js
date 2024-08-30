@@ -2,9 +2,25 @@ import RecentSearches from "../model/recentSearchesModel.js"
 
 export const createRecentSearch = async (req, res) => {
   try {
-    const recentSeach = new RecentSearches(req.body);
-    await recentSeach.save();
-    res.status(201).send(recentSeach);
+    const { userId, searchText, latitude, longitude } = req.body;
+
+    const updatedSearch = await RecentSearches.findOneAndUpdate(
+      { userId, searchText },
+      { 
+        userId, 
+        searchText, 
+        latitude, 
+        longitude,
+        updatedAt: new Date()
+      },
+      { 
+        new: true,
+        upsert: true,
+        setDefaultsOnInsert: true
+      }
+    );
+
+    res.status(200).send(updatedSearch);
   } catch (err) {
     res.status(400).send(err);
   }
@@ -19,7 +35,7 @@ export const getRecentSearches = async (req, res) => {
       }
   
       const recentSearches = await RecentSearches.find({ userId: userId })
-        .sort({ createdAt: -1 }) // Sort by creation date, newest first
+        .sort({ updatedAt: -1 }) // Sort by creation date, newest first
         .limit(10); // Limit to 10 most recent searches, adjust as needed
   
       res.send(recentSearches);
