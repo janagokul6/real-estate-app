@@ -1,5 +1,5 @@
 import express from 'express';
-import { createProperty, getProperties, getPropertiesNear,updateProperty, deleteProperty ,getPropertiesByAgent,getTotalProperties,getAllProperties,updatePropertystatus,getAgentPropertiesCount } from '../controller/propertyController.js';
+import { createProperty, getProperties, getPropertiesNear,updateProperty, deleteProperty ,getPropertiesByAgent,getTotalProperties,getAllProperties,updatePropertystatus,changePropertyStatus,getAgentPropertiesCount } from '../controller/propertyController.js';
 
 const router = express.Router();
 
@@ -26,5 +26,6 @@ router.delete('/properties/:id', deleteProperty);
 router.get('/property/totalproperties', getTotalProperties);
 router.get('/property/getAllProperties', getAllProperties);
 router.get('/property/count/:agentId',getAgentPropertiesCount);
+router.patch('/property/:id', changePropertyStatus);
 
 export default router;

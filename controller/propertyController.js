@@ -853,3 +853,36 @@ export const getAgentPropertiesCount = async (req, res) => {
     });
   }
 };
+
+
+export const changePropertyStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newStatus } = req.body;
+
+
+    if (![ 'pending', 'rented', 'deleted'].includes(newStatus)) {
+      return res.status(400).json({ message: 'Invalid status' });
+    }
+
+    const property = await Property.findById(id);
+
+    if (!property) {
+      return res.status(404).json({ message: 'Property not found' });
+    }
+
+    property.status = newStatus;
+    property.statusHistory.push({
+      status: newStatus,
+      changedAt: new Date(),
+    
+    });
+
+    await property.save();
+
+    res.status(200).json({ message: `Property status changed to ${newStatus} successfully` });
+  } catch (error) {
+    console.error('Error in changePropertyStatus:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
