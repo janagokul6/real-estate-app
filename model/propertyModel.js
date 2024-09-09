@@ -1,8 +1,9 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
-const propertySchema = new Schema({
+const propertySchema = new Schema(
+  {
     title: { type: String, required: true, trim: true },
     type: { type: String, required: true },
     category: { type: String }, // Added category
@@ -13,47 +14,82 @@ const propertySchema = new Schema({
     description: { type: String, required: true },
     features: [{ type: String }],
     // is_featured: { type: Number, required: true,  default: 0 },
-    status: { type:  Boolean, required: true },
+    // status: { type:  Boolean, required: true },
+    status: {
+      type: String,
+      enum: [ "pending", "rented", "deleted"],
+      default: "pending",
+      required: true,
+    },
+    statusHistory: [
+      {
+        status: {
+          type: String,
+          enum: ["pending", "rented", "deleted"],
+        },
+        changedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        changedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    deletedAt: {
+      type: Date,
+    },
+    deletedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     rentNegotiable: { type: Boolean, default: false }, // Added rentNegotiable
     location: {
-        type: {
-            type: String,
-            enum: ['Point'],
-            required: true
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
+      },
+      coordinates: {
+        type: [Number],
+        required: true,
+        validate: {
+          validator: (value) =>
+            value.length === 2 &&
+            typeof value[0] === "number" &&
+            typeof value[1] === "number",
+          message:
+            "Invalid coordinates format. Must be an array of two numbers: [longitude, latitude]",
         },
-        coordinates: {
-            type: [Number],
-            required: true,
-            validate: {
-                validator: (value) => value.length === 2 && typeof value[0] === 'number' && typeof value[1] === 'number',
-                message: 'Invalid coordinates format. Must be an array of two numbers: [longitude, latitude]'
-            }
-        },
-        address: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
-        zip: { type: String, required: true },
-        country: { type: String, required: true, default: "India" }
+      },
+      address: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      zip: { type: String, required: true },
+      country: { type: String, required: true, default: "India" },
     },
     images: [{ type: String }],
     mainImage: { type: String }, // URL of the main image
-    agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    furnishedType: { type: String,required: true}, // Added furnishedType
-    floorNumber: { type: String ,required: true}, // Added floorNumber
-    parking: { type: Number,required: true }, // Added parking
-    preferredTenant: { type: String,required: true }, // Added preferredTenant
-    nextAvailableDate: { type: Date,required: true }, // Added nextAvailableDate
-    petFriendly: { type: Boolean,required: true},// Added petFriendly
-    gatedSociety: { type: Boolean,required: true},// Added gatedSociety
-    brokerage: { type: String,required: true }, // Added brokerage
+    agentId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    furnishedType: { type: String, required: true }, // Added furnishedType
+    floorNumber: { type: String, required: true }, // Added floorNumber
+    parking: { type: Number, required: true }, // Added parking
+    preferredTenant: { type: String, required: true }, // Added preferredTenant
+    nextAvailableDate: { type: Date, required: true }, // Added nextAvailableDate
+    petFriendly: { type: Boolean, required: true }, // Added petFriendly
+    gatedSociety: { type: Boolean, required: true }, // Added gatedSociety
+    brokerage: { type: String, required: true }, // Added brokerage
     Is_featured: { type: Number, default: 0 },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
 
-propertySchema.index({ location: '2dsphere' });
-propertySchema.index({ title: 'text', description: 'text' });
+propertySchema.index({ location: "2dsphere" });
+propertySchema.index({ title: "text", description: "text" });
 
-const Property = mongoose.model('Property', propertySchema);
+const Property = mongoose.model("Property", propertySchema);
 
 export default Property;

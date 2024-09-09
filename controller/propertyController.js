@@ -202,7 +202,12 @@ export const createProperty = async (req, res) => {
       gatedSociety,
       brokerage
     });
-
+ // Add initial status to statusHistory
+ newProperty.statusHistory.push({
+  status,
+  changedAt: new Date(),
+  changedBy: agentId // Assuming the agent creating the property is setting the initial status
+});
     await newProperty.save();
 
     let message = 'Property created successfully';
@@ -703,9 +708,39 @@ export const updateProperty = async (req, res) => {
 
 
 // Delete a property by ID----------------------------------->
+// export const deleteProperty = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     // Find the property
+//     const property = await Property.findById(id);
+
+//     if (!property) {
+//       return res.status(404).json({ message: 'Property not found' });
+//     }
+
+//     // Delete associated images from the file system
+//     if (property.images && property.images.length > 0) {
+//       property.images.forEach(imagePath => {
+//         if (fs.existsSync(imagePath)) {
+//           fs.unlinkSync(imagePath);
+//         }
+//       });
+//     }
+
+//     // Delete the property from the database
+//     await Property.findByIdAndDelete(id);
+
+//     res.status(200).json({ message: 'Property deleted successfully' });
+//   } catch (error) {
+//     console.error('Error in deleteProperty:', error);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 export const deleteProperty = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id; // Assuming you have user authentication middleware
 
     // Find the property
     const property = await Property.findById(id);
@@ -714,19 +749,21 @@ export const deleteProperty = async (req, res) => {
       return res.status(404).json({ message: 'Property not found' });
     }
 
-    // Delete associated images from the file system
-    if (property.images && property.images.length > 0) {
-      property.images.forEach(imagePath => {
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
-        }
-      });
-    }
+    // Update the property status to 'deleted'
+    property.status = 'deleted';
+    property.deletedAt = new Date();
+    property.deletedBy = userId;
 
-    // Delete the property from the database
-    await Property.findByIdAndDelete(id);
+    // Add to status history
+    property.statusHistory.push({
+      status: 'deleted',
+      changedAt: new Date(),
+      changedBy: userId
+    });
 
-    res.status(200).json({ message: 'Property deleted successfully' });
+    await property.save();
+
+    res.status(200).json({ message: 'Property marked as deleted successfully' });
   } catch (error) {
     console.error('Error in deleteProperty:', error);
     res.status(500).json({ message: error.message });
