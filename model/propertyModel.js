@@ -31,10 +31,7 @@ const propertySchema = new Schema(
           type: Date,
           default: Date.now,
         },
-        changedBy: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "User",
-        },
+        
       },
     ],
     deletedAt: {

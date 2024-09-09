@@ -206,7 +206,7 @@ export const createProperty = async (req, res) => {
  newProperty.statusHistory.push({
   status,
   changedAt: new Date(),
-  changedBy: agentId // Assuming the agent creating the property is setting the initial status
+  
 });
     await newProperty.save();
 
@@ -739,8 +739,9 @@ export const updateProperty = async (req, res) => {
 // };
 export const deleteProperty = async (req, res) => {
   try {
+    // console.log(req.params)
     const { id } = req.params;
-    const userId = req.user.id; // Assuming you have user authentication middleware
+    // const userId = req.user.id; // Assuming you have user authentication middleware
 
     // Find the property
     const property = await Property.findById(id);
@@ -757,7 +758,7 @@ export const deleteProperty = async (req, res) => {
     property.statusHistory.push({
       status: 'deleted',
       changedAt: new Date(),
-      changedBy: userId
+    
     });
 
     await property.save();
