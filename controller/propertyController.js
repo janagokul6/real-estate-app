@@ -751,8 +751,7 @@ export const deleteProperty = async (req, res) => {
 
     // Update the property status to 'deleted'
     property.status = 'deleted';
-    property.deletedAt = new Date();
-    property.deletedBy = userId;
+    
 
     // Add to status history
     property.statusHistory.push({
