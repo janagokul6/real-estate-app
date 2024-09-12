@@ -353,6 +353,18 @@ export const getProperties = async (req, res) => {
 //     res.status(500).json({ message: error.message });
 //   }
 // };
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 export const getPropertiesNear = async (req, res) => {
   const {
     longitude,
@@ -374,12 +386,13 @@ export const getPropertiesNear = async (req, res) => {
     let baseQuery = [];
 
     // Add location filter
+    console.log(longitude,latitude,maxDistance)
     if (longitude && latitude && maxDistance) {
       locationQuery.location = {
         $near: {
           $geometry: {
             type: 'Point',
-            coordinates: [parseFloat(longitude), parseFloat(latitude)]
+            coordinates: [parseFloat(latitude), parseFloat(longitude)]
           },
           $maxDistance: parseInt(maxDistance)
         }
@@ -428,6 +441,9 @@ export const getPropertiesNear = async (req, res) => {
       baseQuery.push(areaQuery);
     }
 
+
+
+
     // Combine base queries with $and
     let query = baseQuery.length > 0 ? { $and: baseQuery } : {};
 
@@ -449,22 +465,50 @@ export const getPropertiesNear = async (req, res) => {
       }
     }
 
+
+    // Process and verify distances
+    const maxDistanceKm = parseFloat(maxDistance) / 1000;
+    const verifiedProperties = properties.map(property => {
+      const propLat = property.location.coordinates[0];
+      const propLon = property.location.coordinates[1];
+      
+      const calculatedDistance = haversineDistance(
+        parseFloat(latitude),
+        parseFloat(longitude),
+        propLat,
+        propLon,
+      );
+
+   
+      return {
+        ...property.toObject(),
+        calculatedDistance: calculatedDistance.toFixed(2),
+        withinSpecifiedRange: calculatedDistance <= parseFloat(maxDistanceKm)
+      };
+    });
+// Filter properties that are within the specified range according to haversine calculation
+    const propertiesWithinRange = verifiedProperties.filter(prop => prop.withinSpecifiedRange);
+
     const processImageUrls = (property) => ({
-      ...property.toObject(),
+      ...property,
       images: property.images.map(image => `${BASE_URL}${path.basename(image)}`),
       mainImage: property.mainImage ? `${BASE_URL}${path.basename(property.mainImage)}` : null,
     });
 
-    if (properties.length > 0) {
-      const propertiesWithFullImagePaths = properties.map(processImageUrls);
+    if (propertiesWithinRange.length > 0) {
+      const propertiesWithFullImagePaths = propertiesWithinRange.map(processImageUrls);
 
       res.status(200).json({
         message,
-        properties: propertiesWithFullImagePaths
+        properties: propertiesWithFullImagePaths,
+        totalFound: properties.length,
+        withinCalculatedRange: propertiesWithinRange.length
       });
     } else {
       res.status(200).json({
-        message: "No properties found matching the specified criteria."
+        message: "No properties found matching the specified criteria.",
+        totalFound: properties.length,
+        withinCalculatedRange: 0
       });
     }
   } catch (error) {
