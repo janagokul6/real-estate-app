@@ -16,14 +16,15 @@ import userRoutes
  import  favoritePropertyRoute from './routes/favoritePropertyRoutes.js'
  import notificationRoutes from './routes/notificationRoutes.js';
 const app= express();
+const corsOptions = {
+  origin: 'http://95.216.209.46:3000',  // Your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 
-// app.use(cors());
-app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'http://95.216.209.46:3000');
-res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // app.use(bodyParser.json());
