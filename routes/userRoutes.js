@@ -3,6 +3,7 @@ import { registerUser, loginUser ,getTotalUsers,getTotalAgents,getAllAgents,getA
 import User from "../model/userModel.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import sgMail from "@sendgrid/mail";
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
@@ -14,22 +15,50 @@ import cloudinary from "cloudinary";
 import multer from "multer";
 
 const route = express.Router();
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const senderEmail = process.env.SG_EMAIL;
 
-export const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  auth: {
-    user: "chanel.nolan41@ethereal.email",
-    pass: "6crGVE8GS5ycV8jqNE",
-  },
-});
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log("Server is ready to take our messages");
+// Function to generate a 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000); // Generates a 6-digit number
+};
+
+// Function to send OTP via email with error handling
+const sendOTPEmail = async (email, OTP) => {
+  const msg = {
+    to: email,
+    from:senderEmail , // Your verified email in SendGrid
+    subject: "One-Time Password (OTP) for Verification",
+    text: `Your OTP is: ${OTP}`,
+  };
+
+  try {
+    // Send email using SendGrid
+    await sgMail.send(msg);
+    console.log(`OTP email sent to ${email}`);
+  } catch (error) {
+    // Handle specific SendGrid errors
+    if (error.response) {
+      console.error("SendGrid error response:", error.response.body);
+      // throw new Error(`SendGrid Error: ${error.response.body.errors.map(err => err.message).join(", ")}`);
+    } else {
+      // Handle any other unexpected errors
+      console.error("Error sending email:", error.message);
+      throw new Error("Failed to send email. Please try again later.");
+    }
   }
-});
+};
+// Function to send OTP via email
+// const sendOTPEmail = async (email, OTP) => {
+//   const msg = {
+//     to: email,
+//     from: "your-verified-email@example.com", // Your verified email in SendGrid
+//     subject: "One-Time Password (OTP) for Verification",
+//     text: `Your OTP is: ${OTP}`,
+//   };
+
+//   await sgMail.send(msg);
+// };
 
 // Configure Cloudinary
 cloudinary.v2.config({
@@ -117,6 +146,42 @@ route.post("/login", async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(509).send({ message: "something went wrong" });
+  }
+});
+route.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Check if user exists
+    const storedUser = await User.findOne({ email: email });
+    if (!storedUser) {
+      return res.status(404).send({ message: "No user found with this email" });
+    }
+
+    // Generate OTP
+    const OTP = generateOTP();
+
+    // Hash the OTP and save it in the user object (or store it temporarily elsewhere)
+    const hashedOTP = await bcrypt.hash(OTP.toString(), 10);
+
+    // Save the hashed OTP and its expiration in the database (valid for 10 minutes)
+    storedUser.resetOTP = hashedOTP;
+    storedUser.otpExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+    await storedUser.save();
+
+    // Send OTP via email
+    await sendOTPEmail(email, OTP);
+
+    return res.status(200).json({
+      message: "OTP sent successfully!",
+      id: storedUser._id, // Optionally send the user ID to verify OTP later
+      Otp:OTP
+    });
+  } catch (error) {
+    console.error("Error in /forgot-password:", error);
+
+    // Handle unexpected errors
+    return res.status(500).json({ message: "Something went wrong. Please try again later." });
   }
 });
 
