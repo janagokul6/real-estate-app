@@ -293,4 +293,81 @@ route.get('/admin/allagents', getAllAgents);
 route.get('/admin/allusers', getAllUsers);
 route.delete('/deleteusers/:id', deleteUser);
 
+
+
+// Request to change email with OTP validation
+route.post("/emailchangeotp", async (req, res) => {
+  const { userId, newEmail } = req.body;
+
+  try {
+    // Check if the new email already exists in the system
+    const existingUser = await User.findOne({ email: newEmail });
+    if (existingUser) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    // Check if the user exists
+    const storedUser = await User.findById({_id:userId});
+    if (!storedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate OTP
+    const OTP = generateOTP();
+
+    // Hash the OTP and store it temporarily
+    const hashedOTP = await bcrypt.hash(OTP.toString(), 10);
+
+    // Save OTP and its expiry for email change verification (10 minutes expiry)
+    storedUser.emailChangeOTP = hashedOTP;
+    storedUser.emailChangeExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
+    storedUser.newEmail = newEmail; // Temporarily save the new email
+    await storedUser.save();
+
+    // Send OTP via email to the existing email
+    await sendOTPEmail(storedUser.email, OTP);
+
+    return res.status(200).json({
+      message: "OTP sent to your current email!",
+      userId: storedUser._id
+    });
+  } catch (error) {
+    console.error("Error in /request-email-change:", error);
+    return res.status(500).json({ message: "Something went wrong. Please try again later." });
+  }
+});
+
+
+// Verify OTP and change email
+route.post("/verifyemailchange", async (req, res) => {
+  const { userId, otp } = req.body;
+
+  try {
+    // Find the user
+    const storedUser = await User.findById(userId);
+    if (!storedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if OTP is valid
+    const isOTPValid = await bcrypt.compare(otp.toString(), storedUser.emailChangeOTP);
+    if (!isOTPValid || Date.now() > storedUser.emailChangeExpiry) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Update user's email to the new email
+    storedUser.email = storedUser.newEmail;
+    storedUser.newEmail = undefined; // Clear the temporary new email
+    storedUser.emailChangeOTP = undefined; // Clear OTP and expiry
+    storedUser.emailChangeExpiry = undefined;
+    await storedUser.save();
+
+    return res.status(200).json({ message: "Email changed successfully!" });
+  } catch (error) {
+    console.error("Error in /verify-email-change:", error);
+    return res.status(500).json({ message: "Something went wrong. Please try again later." });
+  }
+});
+
+
 export default route;
