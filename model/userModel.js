@@ -1,6 +1,30 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
 
+const addressSchema = new mongoose.Schema({
+   street: {
+     type: String
+    
+   },
+   city: {
+     type: String
+  
+   },
+   state: {
+     type: String
+    
+   },
+   zipCode: {
+     type: String,
+   
+   //   match: /^[0-9]{5}(?:-[0-9]{4})?$/, // Example for US ZIP codes
+   },
+   country: {
+     type: String,
+   
+   },
+ });
+
 const userSchema = new Schema({
  name: { type: String },
   email: { type: String, required: true, unique: true },
@@ -13,6 +37,7 @@ const userSchema = new Schema({
   lastLoginDate: { type: Date },
   imageurl: { type: String }, 
   status:{type: String },
+  address: addressSchema, // Embedding address schema
    // New fields for OTP and email change
    emailChangeOTP: { type: String },
    emailChangeExpiry: { type: Date },
